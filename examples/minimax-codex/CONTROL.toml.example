@@ -1,0 +1,92 @@
+# Setup template: replace placeholders and complete README readiness checks.
+# The three auditor profiles intentionally refuse launch until confinement is proven.
+agent_deck_binary = "/Users/ry/Documents/Emjin/.agent-deck-runtime/agent-deck/e19e23dac840016f926f35398706bfc398d96c9d/darwin-amd64/agent-deck"
+agent_deck_source_commit = "e19e23dac840016f926f35398706bfc398d96c9d"
+agent_deck_binary_sha256 = "78845b659d04736e8737b31e32a3dfc0a4bc061fa218ea85ac384f6e49643ff5"
+profile = "agent-engine-pilot"
+tool = "mcode"
+source_roots = ["/ABSOLUTE/PROJECT"]
+evidence_roots = ["/ABSOLUTE/EMJIN_STORE/evidence"]
+output_root = "/ABSOLUTE/EMJIN_STORE/results"
+decision_authority_role = "auditor"
+
+[limits]
+max_repair_cycles = 3
+max_worker_generations = 3
+max_audit_attempts = 3
+max_guidance_rounds = 2
+
+[checkpoints]
+soft_active_budget_seconds = 900
+grace_seconds = 300
+max_wall_seconds = 14400
+review_timeout_seconds = 1800
+min_wake_interval_seconds = 60
+
+# Go-project examples: replace with the actual project's verification commands.
+[checks.build]
+argv = ["go", "build", "./..."]
+timeout_seconds = 600
+
+[checks.regression]
+argv = ["go", "test", "-json", "-count=1", "./..."]
+timeout_seconds = 1800
+discovery_required = "true"
+
+[profiles.minimax-worker]
+role = "worker"
+tool = "mcode"
+provider = "minimax"
+model = "MINIMAX_PROVIDER/MINIMAX_MODEL"
+launch_command = ["/Users/ry/.minimax-code/bin/mcode", "--model", "{model}"]
+# Interactive mcode 0.6.2 has no --effort; omission means runtime default.
+
+# Native ACP transport: `mcode acp` reuses the login the operator already has.
+# Authenticate first — the operator runs this, Agent Engine never does:
+#   mcode login                    (China account)
+#   mcode login --region global    (Global account)
+#   mcode provider use token-plan  (or: mcode provider use api-key)
+# `region` is required and refused if misspelled; it is pinned at admission.
+[profiles.minimax-acp-worker]
+role = "worker"
+tool = "mcode"
+transport = "minimax-acp"
+model = "MINIMAX_ACP_ADVERTISED_SELECTOR"
+# Copy an exact ACP-advertised m:minimax:...:v:... value, not provider/model.
+region = "cn"
+
+[profiles.codex-checkpoint]
+role = "checkpoint"
+tool = "codex"
+provider = "native"
+model = "gpt-6.1-sol"
+effort = "high"
+launch_command = ["/Users/ry/.local/bin/codex", "--model", "{model}", "-c", "model_reasoning_effort={effort}", "--sandbox", "read-only", "--ask-for-approval", "never", "--no-daemon", "--disable", "plugins", "--disable", "remote_plugin", "--disable", "apps", "--disable", "hooks"]
+read_only = "true"
+confinement_proven = "false"
+# Set confinement_receipt to a PASSED receipt produced by `agent-engine qualify`.
+# Boolean assertions cannot qualify read-only Codex profiles.
+
+[profiles.codex-diagnostic]
+role = "diagnostic"
+tool = "codex"
+provider = "native"
+model = "gpt-6.1-sol"
+effort = "high"
+launch_command = ["/Users/ry/.local/bin/codex", "--model", "{model}", "-c", "model_reasoning_effort={effort}", "--sandbox", "read-only", "--ask-for-approval", "never", "--no-daemon", "--disable", "plugins", "--disable", "remote_plugin", "--disable", "apps", "--disable", "hooks"]
+read_only = "true"
+confinement_proven = "false"
+# Set confinement_receipt to a PASSED receipt produced by `agent-engine qualify`.
+# Boolean assertions cannot qualify read-only Codex profiles.
+
+[profiles.codex-completion]
+role = "reviewer"
+tool = "codex"
+provider = "native"
+model = "gpt-6.1-sol"
+effort = "high"
+launch_command = ["/Users/ry/.local/bin/codex", "--model", "{model}", "-c", "model_reasoning_effort={effort}", "--sandbox", "read-only", "--ask-for-approval", "never", "--no-daemon", "--disable", "plugins", "--disable", "remote_plugin", "--disable", "apps", "--disable", "hooks"]
+read_only = "true"
+confinement_proven = "false"
+# Set confinement_receipt to a PASSED receipt produced by `agent-engine qualify`.
+# Boolean assertions cannot qualify read-only Codex profiles.

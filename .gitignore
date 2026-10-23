@@ -1,0 +1,24 @@
+# Build artifact. The binary is rebuilt from source; the reviewed digest of the
+# released build should be recorded with each release.
+# A committed executable is a binary nobody reviews, and a stale one in git is
+# worse than no one at all.
+
+# macOS
+.DS_Store
+
+# Local run artifacts. A store holds admitted requests and their state, which is
+# operator data, not source. Nothing under a store is ever committed.
+*.store/
+store/
+CONTROL.toml
+!examples/**/CONTROL.toml.example
+
+/agent-engine
+/bin/
+
+# Generated application bundles
+/dist/
+
+# Python bytecode from caller examples
+__pycache__/
+*.py[cod]

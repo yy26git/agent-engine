@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/asheshgoplani/agent-deck.git",
+  "source_commit": "e19e23dac840016f926f35398706bfc398d96c9d",
+  "artifacts": {
+    "darwin/amd64": {
+      "path": "/Users/ry/Documents/Emjin/.agent-deck-runtime/agent-deck/e19e23dac840016f926f35398706bfc398d96c9d/darwin-amd64/agent-deck",
+      "sha256": "78845b659d04736e8737b31e32a3dfc0a4bc061fa218ea85ac384f6e49643ff5",
+      "build_receipt": "/Users/ry/Documents/Emjin/.agent-deck-runtime/agent-deck/e19e23dac840016f926f35398706bfc398d96c9d/darwin-amd64/BUILD-RECEIPT.json"
+    }
+  }
+}

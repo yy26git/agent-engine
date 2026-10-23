@@ -1,0 +1,123 @@
+#!/bin/sh
+# Agent Deck contract fixture.
+#
+# This implements the documented `agent-deck` CLI surface that the runtime
+# adapter uses, so the control layer can be launched and exercised end to end
+# without a live session, a harness, or a model.
+#
+# It is a CONTRACT fixture, not a mock of the real binary's behaviour and not a
+# live agent. It answers the exact commands and JSON shapes the adapter parses,
+# so a change to that parsing breaks against it. Anything it "delivers" is
+# recorded in $EC_LOG so a test or a person can see what a recipient received.
+#
+# For a real run, point `agent_deck_binary` at the real agent-deck instead.
+
+set -e
+: "${EC_LOG:=/tmp/agent-engine-fixture.log}"
+: "${EC_EVENTS_CURSOR:=0}"
+: "${EC_SESSIONS:=${EC_LOG}.sessions}"
+export EC_LOG EC_EVENTS_CURSOR EC_SESSIONS
+
+echo "agent-deck call: $*" >> "$EC_LOG"
+
+# The real CLI accepts global flags before the subcommand: -p profile, -g group.
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -p|--profile|-g|--group|--select) shift 2 ;;
+    *) break ;;
+  esac
+done
+
+cmd="$1"; shift 2>/dev/null || true
+
+case "$cmd" in
+  add)
+    # A created session. Create is immediate submission, not a durable queue,
+    # so there is no send_id to report here.
+    #
+    # The activation label (--title) is deterministic and unique per role,
+    # generation and nonce, so deriving the session id from it is what lets a
+    # four-role v2 activation be distinguishable. Returning one fixed id here
+    # would collapse the worker, checkpoint, diagnostic and reviewer sessions
+    # into a single session and make distinct-review routing untestable.
+    title=""
+    prev=""
+    for a in "$@"; do
+      if [ "$prev" = "--title" ]; then title="$a"; break; fi
+      prev="$a"
+    done
+    [ -n "$title" ] || title="worker"
+    id=$(printf '%s' "$title" | tr -c 'a-zA-Z0-9' '-' | tr 'A-Z' 'a-z' | cut -c1-40)
+    id="sess-$id"
+    grep -qxF "$id" "$EC_SESSIONS" 2>/dev/null || echo "$id" >> "$EC_SESSIONS"
+    printf '{"ok":true,"session":{"id":"%s","title":"%s","status":"idle"}}\n' "$id" "$title"
+    ;;
+
+  session)
+    sub="$1"; shift
+    case "$sub" in
+      start) echo '{"ok":true}' ;;
+      stop)  echo '{"ok":true}' ;;
+      send)
+        # Durable queued send: the adapter records this send_id and reconciles
+        # through send-status rather than assuming delivery. The receipt echoes
+        # the session actually addressed, so a send aimed at the wrong session
+        # cannot be reported as delivered to the right one.
+        printf 'DELIVERED to %s:\n%s\n---\n' "$1" "$2" >> "$EC_LOG"
+        echo '{"ok":true,"data":{"send_id":"send-1","state":"landed","settled":true,"session_id":"'"$1"'"}}'
+        ;;
+      send-status)
+        echo '{"ok":true,"data":{"send_id":"1","state":"landed","settled":true}}' \
+          | sed "s/\"send_id\":\"1\"/\"send_id\":\"$1\"/"
+        ;;
+      output) echo "fixture output" ;;
+      *) echo '{"ok":true}' ;;
+    esac
+    ;;
+
+  list)
+    # Every session this fixture was asked to create, plus the two legacy
+    # session IDs the v1 demo binds by hand.
+    {
+      echo "sess-worker-1"
+      echo "sess-auditor-1"
+      [ -f "$EC_SESSIONS" ] && cat "$EC_SESSIONS"
+    } | sort -u | awk '
+      BEGIN { printf "{\"sessions\":[" }
+      { sep = (n++ ? "," : "")
+        printf "%s{\"id\":\"%s\",\"status\":\"idle\",\"tool\":\"mcode\",\"path\":\"/tmp\"}", sep, $0 }
+      END { print "]}" }
+    '
+    ;;
+
+  events)
+    sub="$1"; shift
+    case "$sub" in
+      stats)
+        # "enabled" is what the supervisor checks first: a disabled bus means it
+        # would see nothing while appearing healthy, so it refuses to run.
+        printf '{"enabled":true,"dir":"/tmp/ec-fixture-bus","cursor":%s,"frames":%s}\n' \
+          "$EC_EVENTS_CURSOR" "$EC_EVENTS_CURSOR"
+        ;;
+      follow)
+        # Emit whatever backlog the caller asked for, oldest first, then exit.
+        # EC_EVENTS_CURSOR is how many frames are pending.
+        i=1
+        while [ "$i" -le "$EC_EVENTS_CURSOR" ]; do
+          if [ "$i" = "$EC_EVENTS_CURSOR" ] && [ "${EC_EVENTS_LAST_KIND:-finished}" = "finished" ]; then
+            printf '{"cursor":%s,"event_id":"e%s","ts":%s000,"kind":"session.finished","session_id":"sess-worker-1","data":{"done_status":"ok","done_summary":"implemented the fix"}}\n' \
+              "$i" "$i" "$((1757000000 + i))"
+          else
+            printf '{"cursor":%s,"event_id":"e%s","ts":%s000,"kind":"session.transition","session_id":"sess-worker-1","data":{"from_status":"running","to_status":"running"}}\n' \
+              "$i" "$i" "$((1757000000 + i))"
+          fi
+          i=$((i + 1))
+        done
+        exit 0
+        ;;
+      *) echo '{"ok":true}' ;;
+    esac
+    ;;
+
+  *) echo '{"ok":true}' ;;
+esac

@@ -1,0 +1,32 @@
+# Operator setup example. Replace every placeholder before use.
+# Native Cursor ask mode is not a demonstrated OS sandbox.
+agent_deck_binary = "/ABSOLUTE/PINNED/agent-deck"
+agent_deck_source_commit = "REPLACE_WITH_PINNED_SOURCE_COMMIT"
+agent_deck_binary_sha256 = "REPLACE_WITH_SHA256"
+tool = "cursor"
+source_roots = ["/ABSOLUTE/CALLER_WORKSPACE"]
+evidence_roots = ["/ABSOLUTE/STORE/evidence"]
+output_root = "/ABSOLUTE/STORE/results"
+[profiles.cursor-report]
+role = "investigation"
+tool = "cursor"
+transport = "cursor-cli"
+model = "composer-2.5"
+read_only = "true"
+launch_command = ["/ABSOLUTE/VERSIONED/cursor-agent"]
+launcher_sha256 = "REPLACE_WITH_SHA256_OF_THE_LAUNCHER"
+[episode_templates.forge-semantic-report]
+report_only = "true"
+read_only = "true"
+phases = ["REPORT"]
+roles = ["investigation=cursor-report"]
+max_repair_iterations = 1
+max_wall_seconds = 180
+
+[checks]
+
+[limits]
+max_repair_cycles = 1
+max_worker_generations = 1
+max_audit_attempts = 1
+max_guidance_rounds = 1

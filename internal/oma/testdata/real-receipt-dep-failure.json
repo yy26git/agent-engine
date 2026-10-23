@@ -1,0 +1,101 @@
+{
+  "command": "task",
+  "success": false,
+  "tasks": [
+    {
+      "id": "87349d67-cd8c-4cd9-a5cd-f5c953b5edff",
+      "title": "task-a",
+      "assignee": "task-a",
+      "status": "completed",
+      "dependsOn": [],
+      "description": "ok",
+      "maxRetries": 0,
+      "metrics": {
+        "startMs": 1791288256800,
+        "endMs": 1791288256827,
+        "durationMs": 27,
+        "tokenUsage": {
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "toolCalls": [],
+        "retries": 0
+      }
+    },
+    {
+      "id": "34756f44-cd25-4203-9aae-8e36895e0d4d",
+      "title": "task-b",
+      "assignee": "task-b",
+      "status": "failed",
+      "dependsOn": [],
+      "description": "fails 7",
+      "maxRetries": 0,
+      "metrics": {
+        "startMs": 1791288256798,
+        "endMs": 1791288256823,
+        "durationMs": 25,
+        "tokenUsage": {
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "toolCalls": [],
+        "retries": 0
+      }
+    },
+    {
+      "id": "c43b749b-b12a-44ed-b398-974762c6243f",
+      "title": "task-c",
+      "assignee": "task-c",
+      "status": "failed",
+      "dependsOn": [
+        "34756f44-cd25-4203-9aae-8e36895e0d4d"
+      ],
+      "description": "after b",
+      "maxRetries": 0
+    }
+  ],
+  "totalTokenUsage": {
+    "input_tokens": 0,
+    "output_tokens": 0
+  },
+  "agentResults": {
+    "task-b": {
+      "success": false,
+      "output": "Process backend \"task-b\" exited with code 7",
+      "tokenUsage": {
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "toolCalls": []
+    },
+    "task-a": {
+      "success": true,
+      "output": "OUT-A\n",
+      "tokenUsage": {
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "toolCalls": []
+    }
+  },
+  "taskResults": {
+    "87349d67-cd8c-4cd9-a5cd-f5c953b5edff": {
+      "success": true,
+      "output": "OUT-A\n",
+      "tokenUsage": {
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "toolCalls": []
+    },
+    "34756f44-cd25-4203-9aae-8e36895e0d4d": {
+      "success": false,
+      "output": "Process backend \"task-b\" exited with code 7",
+      "tokenUsage": {
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "toolCalls": []
+    }
+  }
+}

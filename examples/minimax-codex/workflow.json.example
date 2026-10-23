@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "request_id": "minimax-codex-pilot-001",
+  "origin": {"kind": "human", "caller_id": "local-operator"},
+  "workspace": {"path": "/ABSOLUTE/PROJECT"},
+  "constraints": {
+    "allow_code_changes": true,
+    "allowed_paths": ["src/**", "tests/**"],
+    "protected_paths": [".git/**"]
+  },
+  "input": {},
+  "workflow_definition": {
+    "version": 1,
+    "name": "minimax-worker-codex-audit",
+    "tasks": [
+      {
+        "id": "repair",
+        "operation": "REPAIR",
+        "objective": "REPLACE: describe one small repair and its expected behavior",
+        "instruction": "REPLACE: describe the reproduced failure, approved scope, required fix and evidence. Use the registered build and regression checks. Do not edit protected files.",
+        "executor_profile": "minimax-acp-worker",
+        "checkpoint_profile": "codex-checkpoint",
+        "diagnostic_profile": "codex-diagnostic",
+        "reviewer_profile": "codex-completion",
+        "check_profiles": ["build", "regression"],
+        "obligations": [
+          {
+            "id": "repair-verified",
+            "criterion": "REPLACE: specify the observable behavior that proves the repair",
+            "required_checks": ["build", "regression"]
+          }
+        ]
+      }
+    ]
+  }
+}
